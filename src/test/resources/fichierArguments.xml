@@ -1,0 +1,13 @@
+<arguments>
+<tracemethod>hivetable</tracemethod>
+<destinationDirectory>hdfs://localhost:9000/test/destination/</destinationDirectory>
+<tracePath>hdfs://localhost:9000/test/trace/</tracePath>
+<traceFileName>trace.csv</traceFileName>
+<schemaFile>hdfs://localhost:9000/test/schema/schemaout.csv</schemaFile>
+<resultFile>hdfs://localhost:9000/test/result/</resultFile>
+<readMode>PERMISSIVE</readMode>
+<partitionColumn>filename</partitionColumn>
+<sourceDirectory>hdfs://localhost:9000/test/source/</sourceDirectory>
+<sourceFileFormat>csv</sourceFileFormat>
+
+</arguments>

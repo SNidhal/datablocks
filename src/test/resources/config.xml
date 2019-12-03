@@ -1,0 +1,23 @@
+<pipeline>
+    <nodes>
+        <TracedCopy>
+            <sourceDirectory>test</sourceDirectory>
+            <destinationDirectory>destination</destinationDirectory>
+            <tracePath>destination</tracePath>
+            <traceFileName>destination</traceFileName>
+            <traceMethod>destination</traceMethod>
+        </TracedCopy>
+        <CsvSource path="src/test/resources/TestFile.csv">
+            <header>true</header>
+            <delimiter>;</delimiter>
+        </CsvSource>
+        <ColumnAppender>
+            <ColumnName>fileName</ColumnName>
+            <rule>tagWithName</rule>
+        </ColumnAppender>
+        <ParquetDestination>
+            <partitionColumn>fileName</partitionColumn>
+            <destinationDirectory>C:/parquet/test</destinationDirectory>
+        </ParquetDestination>
+    </nodes>
+</pipeline>
