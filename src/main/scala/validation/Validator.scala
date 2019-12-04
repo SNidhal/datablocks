@@ -8,7 +8,7 @@ object Validator {
   }
 
   def dropNull(df: DataFrame, minNonNulls: Int): DataFrame = {
-    df.na.drop()
+    df.na.drop(minNonNulls)
   }
 
   def dropNull(df: DataFrame, minNonNulls: Int, cols: Seq[String]): DataFrame = {
@@ -32,7 +32,7 @@ object Validator {
   }
 
   def fillNull(df: DataFrame, value: Double, cols: Seq[String]): DataFrame = {
-    df.na.fill(value)
+    df.na.fill(value,cols)
   }
 
   def fillNull(df: DataFrame, value: Long): DataFrame = {
@@ -40,7 +40,7 @@ object Validator {
   }
 
   def fillNull(df: DataFrame, value: Long, cols: Seq[String]): DataFrame = {
-    df.na.fill(value)
+    df.na.fill(value,cols)
   }
 
   def fillNull(df: DataFrame, valueMap: Map[String, Object]): DataFrame = {
@@ -52,7 +52,7 @@ object Validator {
   }
 
   def fillNull(df: DataFrame, value: String, cols: Seq[String]): DataFrame = {
-    df.na.fill(value)
+    df.na.fill(value,cols)
   }
 
   def replaceNull(df: DataFrame, cols: Seq[String], replacement: Map[String, String]): DataFrame = {
