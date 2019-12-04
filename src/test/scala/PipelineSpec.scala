@@ -1,12 +1,14 @@
 import configuration.ColumnAppender.ColumnAppenderConfigParser
 import configuration.csv.CsvSourceConfigParser
 import configuration.parquet.ParquetDestinationConfigParser
+import configuration.validator.nullHandler.NullValidatorConfigParser
 import destinations.ParquetDestination
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.FlatSpec
 import pipeline.Pipeline
 import sources.CsvSource
 import transformations.ColumnAppender
+import validation.Validator
 
 class PipelineSpec extends FlatSpec {
   val configPath = scala.io.Source.fromFile("src/test/resources/config.xml").mkString
@@ -23,6 +25,10 @@ class PipelineSpec extends FlatSpec {
       ParquetDestinationConfigParser.loadConfig(configPath).destinationDirectory)
     case "ColumnAppender" => df = ColumnAppender.tagWithFileName(df, ColumnAppenderConfigParser.loadConfig(configPath).ColumnName)
     case "TracedCopy" => println("trace")
+    case "NullValidator" => {
+      df =Validator.dropNull(df)
+      NullValidatorConfigParser.loadConfig(configPath)
+    }
     case "CsvSource" => df = CsvSource.read(CsvSourceConfigParser.loadConfig(configPath))
   })
 

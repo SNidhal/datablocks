@@ -11,6 +11,16 @@
             <header>true</header>
             <delimiter>;</delimiter>
         </CsvSource>
+        <NullValidator mode="fill">
+            <columns>
+                <column>c1</column>
+                <column>c2</column>
+            </columns>
+            <map>
+                <value from="x1">x2</value>
+            </map>
+            <value>N/A</value>
+        </NullValidator>
         <ColumnAppender>
             <ColumnName>fileName</ColumnName>
             <rule>tagWithName</rule>
