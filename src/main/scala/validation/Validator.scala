@@ -27,4 +27,31 @@ object Validator {
     df.na.drop(how, cols)
   }
 
+  def fillNull(df: DataFrame, value: Double): Unit = {
+    df.na.fill(value)
+  }
+
+  def fillNull(df: DataFrame, value: Double, cols: Seq[String]): Unit = {
+    df.na.fill(value)
+  }
+
+  def fillNull(df: DataFrame, value: Long): Unit = {
+    df.na.fill(value)
+  }
+
+  def fillNull(df: DataFrame, value: Long, cols: Seq[String]): Unit = {
+    df.na.fill(value)
+  }
+
+  def fillNull(df: DataFrame, valueMap: Map[String, Object]): Unit = {
+    df.na.fill(valueMap)
+  }
+
+  def fillNull(df: DataFrame, value: String): Unit = {
+    df.na.fill(value)
+  }
+
+  def fillNull(df: DataFrame, value: String, cols: Seq[String]): Unit = {
+    df.na.fill(value)
+  }
 }
