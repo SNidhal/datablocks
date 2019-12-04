@@ -27,31 +27,39 @@ object Validator {
     df.na.drop(how, cols)
   }
 
-  def fillNull(df: DataFrame, value: Double): Unit = {
+  def fillNull(df: DataFrame, value: Double): DataFrame = {
     df.na.fill(value)
   }
 
-  def fillNull(df: DataFrame, value: Double, cols: Seq[String]): Unit = {
+  def fillNull(df: DataFrame, value: Double, cols: Seq[String]): DataFrame = {
     df.na.fill(value)
   }
 
-  def fillNull(df: DataFrame, value: Long): Unit = {
+  def fillNull(df: DataFrame, value: Long): DataFrame = {
     df.na.fill(value)
   }
 
-  def fillNull(df: DataFrame, value: Long, cols: Seq[String]): Unit = {
+  def fillNull(df: DataFrame, value: Long, cols: Seq[String]): DataFrame = {
     df.na.fill(value)
   }
 
-  def fillNull(df: DataFrame, valueMap: Map[String, Object]): Unit = {
+  def fillNull(df: DataFrame, valueMap: Map[String, Object]): DataFrame = {
     df.na.fill(valueMap)
   }
 
-  def fillNull(df: DataFrame, value: String): Unit = {
+  def fillNull(df: DataFrame, value: String): DataFrame = {
     df.na.fill(value)
   }
 
-  def fillNull(df: DataFrame, value: String, cols: Seq[String]): Unit = {
+  def fillNull(df: DataFrame, value: String, cols: Seq[String]): DataFrame = {
     df.na.fill(value)
+  }
+
+  def replaceNull(df: DataFrame, cols: Seq[String], replacement: Map[String, String]): DataFrame = {
+    df.na.replace(cols, replacement)
+  }
+
+  def replaceNull(df: DataFrame, col: String, replacement: Map[String, String]): DataFrame = {
+    df.na.replace(col, replacement)
   }
 }
