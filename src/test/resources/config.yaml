@@ -1,0 +1,26 @@
+reader:
+  path: src/test/resources/TestFile.csv
+  schema:
+    - name: firstName
+      type: String
+      nullable: "false"
+    - name: lastName
+      type: String
+      nullable: "false"
+    - name: age
+      type: Integer
+      nullable: "false"
+  options:
+    header: "true"
+    delimiter: ;
+transformer:
+  - columnName: fileName
+    rule: tagWithName
+  - columnName: fileName2
+    rule: tagWithName
+writer:
+  path: C:/parquet/test
+  mode: append
+  partionnedBy: fileName
+  format: parquet
+  compression: snappy
