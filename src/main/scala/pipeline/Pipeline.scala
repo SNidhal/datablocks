@@ -13,8 +13,8 @@ import scala.collection.JavaConverters._
 object Pipeline {
 
 
-  def buildEtl(configPath: String)(implicit sparkSession: SparkSession): Etl = {
-    val configPath = scala.io.Source.fromFile("src/test/resources/config.yaml").mkString
+  def buildEtl(config : String)(implicit sparkSession: SparkSession): Etl = {
+    val configPath = scala.io.Source.fromFile(config).mkString
     val yml = new Yaml()
     val configuration = yml.load(configPath).asInstanceOf[java.util.Map[String, Object]]
     val readerPath = configuration.get("reader").asInstanceOf[java.util.Map[String, String]].get("path")
