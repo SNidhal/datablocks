@@ -1,5 +1,6 @@
 reader:
   path: src/test/resources/TestFile.csv
+  format: csv
   schema:
     - name: firstName
       type: String
@@ -21,6 +22,6 @@ transformer:
 writer:
   path: C:/parquet/test
   mode: append
-  partionnedBy: fileName
+  partitionedBy: fileName
   format: parquet
   compression: snappy
