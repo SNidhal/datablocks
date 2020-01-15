@@ -17,8 +17,12 @@ reader:
 transformer:
   - columnName: fileName
     rule: tagWithName
+    type: ColumnAppender
   - columnName: fileName2
     rule: tagWithName
+    type: ColumnAppender
+  - query: "select age,fileName from TMP"
+    type: QueryHandler
 writer:
   path: C:/parquet/test
   mode: append
