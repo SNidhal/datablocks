@@ -1,0 +1,6 @@
+writer:
+  path: C:/parquet/test
+  mode: append
+  partitionedBy: fileName
+  format: parquet
+  compression: snappy

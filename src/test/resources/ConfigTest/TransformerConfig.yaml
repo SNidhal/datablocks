@@ -1,0 +1,16 @@
+transformer:
+  - columnName: fileName
+    rule: tagWithName
+    type: ColumnAppender
+  - columnName: fileName2
+    rule: tagWithName
+    type: ColumnAppender
+  - query: "select * from TMP"
+    type: QueryHandler
+  - how: "all"
+    mapping:
+      12: 100
+    columns:
+      - age
+    strategy: "replace"
+    type: NullHandler

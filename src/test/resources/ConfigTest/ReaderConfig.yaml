@@ -1,0 +1,16 @@
+reader:
+  path: src/test/resources/TestFile.csv
+  format: csv
+  schema:
+    - name: firstName
+      type: String
+      nullable: "false"
+    - name: lastName
+      type: String
+      nullable: "false"
+    - name: age
+      type: Integer
+      nullable: "false"
+  options:
+    header: "true"
+    delimiter: ;
