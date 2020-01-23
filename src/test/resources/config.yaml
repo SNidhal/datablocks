@@ -21,8 +21,14 @@ transformer:
   - columnName: fileName2
     rule: tagWithName
     type: ColumnAppender
-  - query: "select age,fileName from TMP"
+  - query: "select * from TMP"
     type: QueryHandler
+  - mapping:
+      64: 100
+    columns:
+      - age
+    strategy: "replace"
+    type: NullHandler
 writer:
   path: C:/parquet/test
   mode: append
