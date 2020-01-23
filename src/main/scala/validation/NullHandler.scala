@@ -6,7 +6,6 @@ import org.apache.spark.sql.types.{BooleanType, DataType, IntegerType, LongType,
 object NullHandler {
 
   def dropNull(how: String, cols: Seq[String])(df: DataFrame): DataFrame = {
-    println(how, cols)
     (how, cols) match {
       case (s: String, cl: Seq[String]) => df.na.drop(s, cl)
       case (s: String, null) => df.na.drop(s)
