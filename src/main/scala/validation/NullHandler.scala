@@ -30,7 +30,7 @@ object NullHandler {
 
   def replaceNull(cols: Seq[String], replacement: Map[String, String])(df: DataFrame): DataFrame = {
     val dataType = df.schema.apply(cols.head).dataType
-    val castedReplacement = replacement.map(x => castTo(x._1, dataType) -> castTo(x._2, dataType))
+    val castedReplacement = replacement.map(x => x._1 -> x._2)
     df.na.replace(cols, castedReplacement)
   }
 
