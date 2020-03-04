@@ -3,11 +3,15 @@ package pipeline
 import destinations.Writer
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import sources.Reader
+import transformations.Joiner
 
 case class Etl(reader: Reader,
                transformer: List[DataFrame=> DataFrame],
                writer: Writer,
-              ) (implicit sparkSession: SparkSession){
+               destinationId:Option[String],
+               id :String,
+               joiner: Joiner
+              )(implicit sparkSession: SparkSession){
 
   def runPipeline(df: DataFrame): DataFrame = {
     transformer.foldLeft(df) {
