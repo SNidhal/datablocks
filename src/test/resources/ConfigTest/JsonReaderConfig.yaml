@@ -1,0 +1,15 @@
+reader:
+  path: src/test/resources/TestFile.json
+  format: json
+  schema:
+    - name: firstName
+      type: String
+      nullable: "true"
+    - name: lastName
+      type: String
+      nullable: "true"
+    - name: age
+      type: Integer
+      nullable: "true"
+  options:
+    multiline: "true"

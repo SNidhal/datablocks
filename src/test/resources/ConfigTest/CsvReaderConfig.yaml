@@ -6,8 +6,6 @@ reader:
       type: String
       nullable: "false"
     - name: lastName
-      type: String
-      nullable: "false"
     - name: age
       type: Integer
       nullable: "false"

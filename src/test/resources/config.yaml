@@ -33,5 +33,6 @@ writer:
   path: C:/parquet/test
   mode: append
   partitionedBy: fileName
-  format: parquet
+  format: table
   compression: snappy
+  tableName: test
