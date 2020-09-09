@@ -69,13 +69,21 @@ object EtlTreeConstructor {
   def fold(t: Tree[Etl])(implicit _sparkSession: SparkSession): DataFrame = t match {
     case Leaf(a) => Leaf(a).value.runPipeline(Leaf(a).value.reader.read())
     case Branch(data, seq) =>
-      val left = seq.filter(x=>x.asInstanceOf[Leaf].value.id==data.joiner.left).head
-      val right = seq.filter(x=>x.asInstanceOf[Leaf].value.id==data.joiner.right).head
+      val left = seq.filter(x => x.asInstanceOf[Leaf].value.id == data.joiner.left).head
+      val right = seq.filter(x => x.asInstanceOf[Leaf].value.id == data.joiner.right).head
       data.runPipeline(data.joiner.join(fold(left), fold(right)))
     case Root(data, seq) =>
-      val left = seq.filter(x=>x.asInstanceOf[Leaf].value.id==data.joiner.left).head
-      val right = seq.filter(x=>x.asInstanceOf[Leaf].value.id==data.joiner.right).head
+      val left = seq.filter(x => x.asInstanceOf[Leaf].value.id == data.joiner.left).head
+      val right = seq.filter(x => x.asInstanceOf[Leaf].value.id == data.joiner.right).head
       data.runPipeline(data.joiner.join(fold(left), fold(right)))
+  }
+
+  def run(t: Tree[Etl],user:String,application:String)(implicit _sparkSession: SparkSession): Unit = {
+    t match {
+      case x: Root => x.data.runRoot(fold(x),user,application)
+      case x: Leaf => x.value.runRoot(fold(x),user,application)
+    }
+
   }
 }
 

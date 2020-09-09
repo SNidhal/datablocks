@@ -90,7 +90,7 @@ class ConfigurationSpec extends FlatSpec with GivenWhenThen with Matchers with S
 
   it should "build a Writer" in {
 
-    val expectedWriter= Writer("C:/parquet/test","append","fileName","snappy","parquet",Map(),null)
+    val expectedWriter= Writer("C:/parquet/test","append",List("fileName"),"snappy","parquet",Map(),null,"batch")
 
     Given("the path of the configuration file")
     val configSource = scala.io.Source.fromFile("src/test/resources/ConfigTest/WriterConfig.yaml")

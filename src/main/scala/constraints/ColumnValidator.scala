@@ -11,7 +11,6 @@ object ColumnValidator {
     constraintList.foldLeft(dfWithConstraint) {
       (mediumDf, constraint) =>
         constraint.mode match {
-          //TODO case "FAILFAST" =>
           case "Permissive" => mediumDf
             .withColumn("broken_constraint", when(expr(constraint.condition) === true, mediumDf("broken_constraint"))
             .otherwise(expr("concat(broken_constraint,'" + constraint.condition + "',';')")))

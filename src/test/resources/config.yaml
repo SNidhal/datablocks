@@ -36,3 +36,6 @@ writer:
   format: table
   compression: snappy
   tableName: test
+
+
+

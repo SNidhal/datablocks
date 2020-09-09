@@ -1,8 +1,11 @@
 package transformations
 
-import java.nio.file.{Files, Path, Paths}
+import java.net.URI
+import java.nio.file.{Files, Paths}
 import java.nio.file.attribute.FileOwnerAttributeView
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.{Window, WindowSpec}
@@ -10,6 +13,7 @@ import org.apache.spark.sql.expressions.{Window, WindowSpec}
 import scala.reflect.io.File
 
 object ColumnAppender {
+
   def tagWithFileName(columnName: String)(df: DataFrame)(implicit spark: SparkSession): DataFrame = {
     spark.udf.register("file_name", (path: String) => path.substring(path.lastIndexOf("/") + 1, path.lastIndexOf(".")))
 
@@ -88,6 +92,147 @@ object ColumnAppender {
       val df1 = df.withColumn("input_file_name", input_file_name())
       val df2 = df1.select("input_file_name").as("input_file_name_ref").distinct()
         .withColumn(columnName, callUDF("file_owner", col("_y")))
+
+      df1.join(df2, df1("input_file_name") === df2("input_file_name_ref")).drop("input_file_name_ref")
+    }
+
+
+  }
+
+  ///
+
+  def tagWithFileNameHDFS(columnName: String)(df: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    spark.udf.register("file_name", (path: String) => path.substring(path.lastIndexOf("/") + 1, path.lastIndexOf(".")))
+
+    val schemaFields = df.schema.fields.map(x => x.name)
+    if (schemaFields.contains("input_file_name")) {
+      df.withColumn(columnName, callUDF("file_name", col("input_file_name")))
+    } else {
+      val df2 = df.withColumn("input_file_name", input_file_name())
+      df2.withColumn(columnName, callUDF("file_name", col("input_file_name")))
+    }
+  }
+
+
+
+
+  def tagWithFileSizeHDFS(columnName: String)(df: DataFrame)(implicit spark: SparkSession): DataFrame = {
+    spark.udf.register("file_size", (path: String) => {
+      val fs = FileSystem.get(new URI(path.substring(0,path.lastIndexOf("/"))), new Configuration())
+      val status = fs.listStatus(new Path(path.substring(0,path.lastIndexOf("/"))))
+      status.filter(x=>x.getPath.toString.equals(path)).head.getLen
+    })
+    val schemaFields = df.schema.fields.map(x => x.name)
+    if (schemaFields.contains("input_file_name")) {
+
+      val df2 = df.select("input_file_name").withColumnRenamed("input_file_name", "input_file_name_ref").distinct()
+        .withColumn(columnName, callUDF("file_size", col("input_file_name_ref")))
+
+      df.join(df2, df("input_file_name") === df2("input_file_name_ref")).drop("input_file_name_ref")
+    } else {
+      val df1 = df.withColumn("input_file_name", input_file_name())
+      val df2 = df1.select("input_file_name").withColumnRenamed("input_file_name", "input_file_name_ref").distinct()
+        .withColumn(columnName, callUDF("file_size", col("input_file_name_ref")))
+
+      df1.join(df2, df1("input_file_name") === df2("input_file_name_ref")).drop("input_file_name_ref")
+    }
+
+  }
+
+  def tagWithFileOwnerHDFS(columnName: String)(df: DataFrame)(implicit spark: SparkSession): DataFrame = {
+
+    spark.udf.register("file_owner", (path: String) => {
+      val fs = FileSystem.get(new URI(path.substring(0,path.lastIndexOf("/"))), new Configuration())
+      val status = fs.listStatus(new Path(path.substring(0,path.lastIndexOf("/"))))
+      status.filter(x=>x.getPath.toString.equals(path)).head.getOwner
+    })
+    val schemaFields = df.schema.fields.map(x => x.name)
+    if (schemaFields.contains("input_file_name")) {
+      val df2 = df.select("input_file_name").withColumnRenamed("input_file_name", "input_file_name_ref").distinct()
+        .withColumn(columnName, callUDF("file_owner", col("input_file_name_ref")))
+
+
+      df.join(df2, df("input_file_name") === df2("input_file_name_ref")).drop("input_file_name_ref")
+    } else {
+      val df1 = df.withColumn("input_file_name", input_file_name())
+      val df2 = df1.select("input_file_name").withColumnRenamed("input_file_name", "input_file_name_ref").distinct()
+        .withColumn(columnName, callUDF("file_owner", col("input_file_name_ref")))
+
+      df1.join(df2, df1("input_file_name") === df2("input_file_name_ref")).drop("input_file_name_ref")
+    }
+
+
+  }
+
+
+  def tagWithFileOwnerGroup(columnName: String)(df: DataFrame)(implicit spark: SparkSession): DataFrame = {
+
+    spark.udf.register("file_owner_group", (path: String) => {
+      val fs = FileSystem.get(new URI(path.substring(0,path.lastIndexOf("/"))), new Configuration())
+      val status = fs.listStatus(new Path(path.substring(0,path.lastIndexOf("/"))))
+      status.filter(x=>x.getPath.toString.equals(path)).head.getGroup
+    })
+    val schemaFields = df.schema.fields.map(x => x.name)
+    if (schemaFields.contains("input_file_name")) {
+      val df2 = df.select("input_file_name").withColumnRenamed("input_file_name", "input_file_name_ref").distinct()
+        .withColumn(columnName, callUDF("file_owner_group", col("input_file_name_ref")))
+
+
+      df.join(df2, df("input_file_name") === df2("input_file_name_ref")).drop("input_file_name_ref")
+    } else {
+      val df1 = df.withColumn("input_file_name", input_file_name())
+      val df2 = df1.select("input_file_name").withColumnRenamed("input_file_name", "input_file_name_ref").distinct()
+        .withColumn(columnName, callUDF("file_owner_group", col("input_file_name_ref")))
+
+      df1.join(df2, df1("input_file_name") === df2("input_file_name_ref")).drop("input_file_name_ref")
+    }
+
+
+  }
+
+  def tagWithFileModificationTime(columnName: String)(df: DataFrame)(implicit spark: SparkSession): DataFrame = {
+
+    spark.udf.register("file_modification_time", (path: String) => {
+      val fs = FileSystem.get(new URI(path.substring(0,path.lastIndexOf("/"))), new Configuration())
+      val status = fs.listStatus(new Path(path.substring(0,path.lastIndexOf("/"))))
+      status.filter(x=>x.getPath.toString.equals(path)).head.getModificationTime
+    })
+    val schemaFields = df.schema.fields.map(x => x.name)
+    if (schemaFields.contains("input_file_name")) {
+      val df2 = df.select("input_file_name").withColumnRenamed("input_file_name", "input_file_name_ref").distinct()
+        .withColumn(columnName, callUDF("file_modification_time", col("input_file_name_ref")))
+
+
+      df.join(df2, df("input_file_name") === df2("input_file_name_ref")).drop("input_file_name_ref")
+    } else {
+      val df1 = df.withColumn("input_file_name", input_file_name())
+      val df2 = df1.select("input_file_name").withColumnRenamed("input_file_name", "input_file_name_ref").distinct()
+        .withColumn(columnName, callUDF("file_modification_time", col("input_file_name_ref")))
+
+      df1.join(df2, df1("input_file_name") === df2("input_file_name_ref")).drop("input_file_name_ref")
+    }
+
+
+  }
+
+  def tagWithFilePermission(columnName: String)(df: DataFrame)(implicit spark: SparkSession): DataFrame = {
+
+    spark.udf.register("file_permission", (path: String) => {
+      val fs = FileSystem.get(new URI(path.substring(0,path.lastIndexOf("/"))), new Configuration())
+      val status = fs.listStatus(new Path(path.substring(0,path.lastIndexOf("/"))))
+      status.filter(x=>x.getPath.toString.equals(path)).head.getPermission.toString
+    })
+    val schemaFields = df.schema.fields.map(x => x.name)
+    if (schemaFields.contains("input_file_name")) {
+      val df2 = df.select("input_file_name").withColumnRenamed("input_file_name", "input_file_name_ref").distinct()
+        .withColumn(columnName, callUDF("file_permission", col("input_file_name_ref")))
+
+
+      df.join(df2, df("input_file_name") === df2("input_file_name_ref")).drop("input_file_name_ref")
+    } else {
+      val df1 = df.withColumn("input_file_name", input_file_name())
+      val df2 = df1.select("input_file_name").withColumnRenamed("input_file_name", "input_file_name_ref").distinct()
+        .withColumn(columnName, callUDF("file_permission", col("input_file_name_ref")))
 
       df1.join(df2, df1("input_file_name") === df2("input_file_name_ref")).drop("input_file_name_ref")
     }

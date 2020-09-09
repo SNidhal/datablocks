@@ -1,5 +1,5 @@
 reader:
-  path: src/test/resources/TestFile.csv
+  path: hdfs://localhost:9000/test/source/TestFile.csv
   format: csv
   schema:
     - name: firstName

@@ -20,7 +20,11 @@ case class Etl(reader: Reader,
   }
 
   def run():Unit = {
-    writer.write(runPipeline(reader.read()))
+    writer.write(runPipeline(reader.read()),"","")
+  }
+
+  def runRoot(df: DataFrame,user:String,application:String):Unit = {
+    writer.write(df,user,application)
   }
 
 }

@@ -10,6 +10,7 @@ trait SharedSparkSession2 extends BeforeAndAfterAll {
     .builder()
     .appName("test_Session")
     .master("local[*]")
+    .enableHiveSupport()
     .getOrCreate()
 
 

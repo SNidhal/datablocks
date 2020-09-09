@@ -3,4 +3,5 @@ writer:
   mode: append
   partitionedBy: fileName
   format: parquet
+  processMode: batch
   compression: snappy

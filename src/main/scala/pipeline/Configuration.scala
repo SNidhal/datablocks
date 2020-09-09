@@ -2,11 +2,12 @@ package pipeline
 
 import constraints.{ColumnValidator, Constraint}
 import destinations.Writer
+import org.apache.spark
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.types.{BooleanType, DataType, DoubleType, IntegerType, StringType, StructField, StructType}
 import org.yaml.snakeyaml.Yaml
 import sources.Reader
-import transformations.{ColumnAppender, Joiner, QueryHandler}
+import transformations.{ColumnAppender, Identity, Joiner, QueryHandler}
 import validation.NullHandler
 
 import scala.collection.JavaConverters._
@@ -64,7 +65,8 @@ object Configuration {
       case "Integer" => IntegerType
       case "Double" => DoubleType
       case "Boolean" => BooleanType
-
+      case "Date" => spark.sql.types.DateType
+      case "Float" => spark.sql.types.FloatType
     }
   }
 
@@ -72,26 +74,30 @@ object Configuration {
   def buildReader(readerConfig: Object): Reader = {
     val readerPath = readerConfig.asInstanceOf[java.util.Map[String, String]].get("path")
     val readerFormat = readerConfig.asInstanceOf[java.util.Map[String, String]].get("format")
+    val processMode = readerConfig.asInstanceOf[java.util.Map[String, String]].get("processMode")
     val readerOptions = readerConfig.asInstanceOf[java.util.Map[String, Object]].get("options")
       .asInstanceOf[java.util.Map[String, String]].asScala
     val schemaFields: List[StructField] = readerConfig.asInstanceOf[java.util.Map[String, Object]].get("schema")
       .asInstanceOf[java.util.ArrayList[java.util.Map[String, String]]].toArray().toList
       .map(x => x.asInstanceOf[java.util.Map[String, String]])
       .map(fieldMap => StructField(fieldMap.get("name"),
-        replaceTypeWithDatatype(fieldMap.getOrDefault("type","String")),
-        fieldMap.getOrDefault("nullable","true").toBoolean))
-    Reader(readerPath, readerFormat, StructType(schemaFields), readerOptions.toMap)
+        replaceTypeWithDatatype(fieldMap.getOrDefault("type", "String")),
+        fieldMap.getOrDefault("nullable", "true").toBoolean))
+    Reader(readerPath, readerFormat, StructType(schemaFields), readerOptions.toMap,processMode)
   }
 
   def buildTransformer(transformerConfig: Object)(implicit sparkSession: SparkSession): List[DataFrame => DataFrame] = {
+    if(transformerConfig==null){
+      return List(Identity.getIdentity)
+    }
     transformerConfig.asInstanceOf[java.util.ArrayList[java.util.Map[String, String]]]
       .toArray().toList
       .map(x => x.asInstanceOf[java.util.Map[String, Object]])
       .map(x => {
         x.get("type") match {
           case "ColumnAppender" => x.get("rule") match {
-            case "tagWithName" =>
-              val a: DataFrame => DataFrame = ColumnAppender.tagWithFileName(x.get("columnName").asInstanceOf[String])
+            case "FileName" =>
+              val a: DataFrame => DataFrame = ColumnAppender.tagWithFileNameHDFS(x.get("columnName").asInstanceOf[String])
               a
             case "addRankInGroup" =>
               val a: DataFrame => DataFrame = ColumnAppender.addRankInGroup(x.get("columnName").asInstanceOf[String],
@@ -101,20 +107,29 @@ object Configuration {
               val a: DataFrame => DataFrame = ColumnAppender.deriveColumn(x.get("columnName").asInstanceOf[String],
                 x.get("expression").asInstanceOf[String])
               a
-            case "tagWithSize" =>
-              val a: DataFrame => DataFrame = ColumnAppender.tagWithFileSize(x.get("columnName").asInstanceOf[String])
+            case "FileSize" =>
+              val a: DataFrame => DataFrame = ColumnAppender.tagWithFileSizeHDFS(x.get("columnName").asInstanceOf[String])
               a
-            case "tagWithOwner" =>
-              val a: DataFrame => DataFrame = ColumnAppender.tagWithFileOwner(x.get("columnName").asInstanceOf[String])
+            case "FileOwner" =>
+              val a: DataFrame => DataFrame = ColumnAppender.tagWithFileOwnerHDFS(x.get("columnName").asInstanceOf[String])
+              a
+            case "FileOwnerGroup" =>
+              val a: DataFrame => DataFrame = ColumnAppender.tagWithFileOwnerGroup(x.get("columnName").asInstanceOf[String])
+              a
+            case "FileModificationTime" =>
+              val a: DataFrame => DataFrame = ColumnAppender.tagWithFileModificationTime(x.get("columnName").asInstanceOf[String])
+              a
+            case "FilePermission" =>
+              val a: DataFrame => DataFrame = ColumnAppender.tagWithFilePermission(x.get("columnName").asInstanceOf[String])
               a
             case "functionOverWindow" =>
-              val columnName =x.get("columnName").asInstanceOf[String]
-              val function =x.get("function").asInstanceOf[String]
-              val partitionColumn =x.get("partitionColumn").asInstanceOf[String]
-              val order =x.getOrDefault("order",null).asInstanceOf[String]
-              val orderColumn=x.getOrDefault("orderColumn",null).asInstanceOf[String]
-              val rangeStart=x.getOrDefault("rangeStart",null).asInstanceOf[String]
-              val rangeEnd=x.getOrDefault("rangeEnd",null).asInstanceOf[String]
+              val columnName = x.get("columnName").asInstanceOf[String]
+              val function = x.get("function").asInstanceOf[String]
+              val partitionColumn = x.get("partitionColumn").asInstanceOf[String]
+              val order = x.getOrDefault("order", null).asInstanceOf[String]
+              val orderColumn = x.getOrDefault("orderColumn", null).asInstanceOf[String]
+              val rangeStart = x.getOrDefault("rangeStart", null).asInstanceOf[String]
+              val rangeEnd = x.getOrDefault("rangeEnd", null).asInstanceOf[String]
 
 
               val a: DataFrame => DataFrame = ColumnAppender.runOverWindow(
@@ -136,14 +151,19 @@ object Configuration {
               .asInstanceOf[java.util.ArrayList[String]]
               .toArray().toList.map(x => x.asInstanceOf[String])
             val strategy: String = x.get("strategy").toString
+            val value = x.getOrDefault("value",null)
+            val valueType = x.getOrDefault("valueType",null)
 
             val mapping = x.get("mapping").asInstanceOf[java.util.Map[String, String]].asScala
 
             strategy match {
-              case "drop" => val a: DataFrame => DataFrame = NullHandler.dropNull(x.get("how").asInstanceOf[String], columns)
+              case "Drop" => val a: DataFrame => DataFrame = NullHandler.dropNull(x.get("how").asInstanceOf[String], columns)
                 a
-              case "replace" => val a: DataFrame => DataFrame = NullHandler.replaceNull(columns, mapping.toMap)
+              case "Replace" => val a: DataFrame => DataFrame = NullHandler.replaceNull(columns, mapping.toMap)
                 a
+              case "Fill" => val a: DataFrame => DataFrame = NullHandler.fillNull(value.toString,valueType.toString,columns,null)
+                a
+
             }
           case "Validation" =>
             val constraintList = x.get("constraints").asInstanceOf[java.util.ArrayList[java.util.Map[String, String]]]
@@ -163,14 +183,23 @@ object Configuration {
   def buildWriter(writerConfig: Object)(implicit sparkSession: SparkSession): Writer = {
     val writerPath = writerConfig.asInstanceOf[java.util.Map[String, String]].get("path")
     val mode = writerConfig.asInstanceOf[java.util.Map[String, String]].get("mode")
-    val partitionedBy = writerConfig.asInstanceOf[java.util.Map[String, String]].get("partitionedBy")
+    val partitionedBySource = writerConfig.asInstanceOf[java.util.Map[String, java.util.ArrayList[String]]]
+      .getOrDefault("partitionedBy", null)
+    val partitionedBy = partitionedBySource match {
+      case null => null
+      case partitionColumnList: Object => partitionColumnList.asInstanceOf[java.util.ArrayList[String]].toArray.toList
+    }
     val format = writerConfig.asInstanceOf[java.util.Map[String, String]].get("format")
+    val processMode = writerConfig.asInstanceOf[java.util.Map[String, String]].get("processMode")
+    val triggerType = writerConfig.asInstanceOf[java.util.Map[String, String]].get("triggerType")
+    val triggerValue = writerConfig.asInstanceOf[java.util.Map[String, String]].get("triggerValue")
     val compression = writerConfig.asInstanceOf[java.util.Map[String, String]].get("compression")
     val writerOptions = writerConfig.asInstanceOf[java.util.Map[String, Object]]
       .getOrDefault("options", new java.util.HashMap[String, String]())
       .asInstanceOf[java.util.Map[String, String]].asScala
     val tableName = writerConfig.asInstanceOf[java.util.Map[String, String]].get("tableName")
-    Writer(writerPath, mode, partitionedBy, compression, format, writerOptions.toMap, tableName)
+    Writer(writerPath, mode, partitionedBy.asInstanceOf[List[String]], compression, format, writerOptions.toMap,
+      tableName, processMode,triggerType,triggerValue)
   }
 
   def buildJoiner(joinerConfig: Object)(implicit sparkSession: SparkSession): Joiner = {
